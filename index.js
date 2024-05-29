@@ -52,12 +52,13 @@ function homepageHandler(req, res) {
         <style>
           body { font-family: Arial, sans-serif; }
           .memory { margin-bottom: 1em; }
+          .text-area { margin-bottom: 0.5em; }
         </style>
       </head>
       <body>
         <h1>Memories</h1>
         <form action="/create-memory" method="post">
-          <textarea name="content" rows="4" cols="50" placeholder="Write you new memory here"></textarea>
+          <textarea class="text-area" name="content" rows="4" cols="50" placeholder="Write you new memory here"></textarea>
           <br>
           <button type="submit">Add Memory</button>
         </form>
@@ -80,12 +81,22 @@ function homepageHandler(req, res) {
     </html>
   `;
   res.writeHead(200, { 'Content-Type': 'text/html' }).end(homepageContent);
+
+  /* Sending a JSON response */
+  // res.writeHead(200, { 'Content-Type': 'application/json' });
+  // res.end(JSON.stringify(memories));
 }
 
 function memorypageHandler(req, res) {
   const id = parseInt(req.url.split('/')[2], 10); // takes the third item in the split array result (expected to be the id) and parse it using base10
-  const memory = memories.find((memory) => memory.id === id);
 
+  if (isNaN(id)) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Invalid memory ID' }));
+    return;
+  }
+
+  const memory = memories.find((memory) => memory.id === id);
   const memorypageContent = `
     <html>
       <head>
@@ -103,9 +114,13 @@ function memorypageHandler(req, res) {
     </html>
   `;
   res.writeHead(200, { 'Content-Type': 'text/html' }).end(memorypageContent);
+
+  /* Sending a JSON response */
+  // res.writeHead(200, { 'Content-Type': 'application/json' });
+  // res.end(JSON.stringify(memory));
 }
 
-function postMemoryHandler(req, res) {
+function createNewMemory(req, res) {
   let body = '';
 
   // Collect data from the form submission
@@ -159,7 +174,7 @@ const server = http.createServer((req, res) => {
   } else if (reqUrl.pathname.startsWith('/memory/') && req.method === 'GET') {
     handleRequest(req, res, authMiddleware, memorypageHandler);
   } else if (req.url === '/create-memory' && req.method === 'POST') {
-    handleRequest(req, res, authMiddleware, postMemoryHandler);
+    handleRequest(req, res, authMiddleware, createNewMemory);
   } else {
     res
       .writeHead(404, { 'Content-Type': 'text/html' })
